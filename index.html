@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مؤقت تمارين القبضة</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .language-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            padding: 15px 20px;
+            z-index: 999;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--border);
+        }
+        .lang-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .tracking-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--success);
+            background: white;
+            color: var(--success);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background-color: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-btn {
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text);
+        }
+        .close-btn:hover { color: var(--danger); }
+        h1 { text-align: center; color: var(--primary); }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 20px;
+        }
+        .stat-box {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+        }
+        .stat-label { font-size: 0.9rem; color: #64748b; }
+        .stat-value { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
+        .timer-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .timer-label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+            height: 1.5em;
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+        .timer-display.rest-mode { color: var(--warning); }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success.completed { opacity: 0.5; }
+        .hand-counters {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .hand-counter {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 150px;
+            transition: transform 0.3s;
+        }
+        .hand-counter.active {
+            border: 2px solid var(--primary);
+            transform: scale(1.05);
+        }
+        .hand-label { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; }
+        .hand-count { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background: var(--primary); color: white; }
+        tr.completed { background: #f0fdf4; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-completed { background: #dcfce7; color: #166534; }
+        @media (max-width: 768px) {
+            .controls { flex-direction: column; }
+            button { width: 100%; }
+            .hand-counters { flex-direction: column; }
+            .stats { flex-direction: column; }
+            .timer-display { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-bar">
+            <button class="tracking-btn" id="tracking-btn" onclick="openTracking()">📊 التتبع</button>
+            <button class="lang-btn active" id="lang-ar" onclick="changeLanguage('ar')">العربية</button>
+            <button class="lang-btn" id="lang-fr" onclick="changeLanguage('fr')">Français</button>
+        </div>
+
+        <h1>برنامج تمارين تقوية القبضة 💪</h1>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label" id="sets-label">مجموعات مكتملة</div>
+                <div class="stat-value" id="completed-sets">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label" id="time-label">الوقت الإجمالي</div>
+                <div class="stat-value" id="total-time">00:00</div>
+            </div>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="text-align: center; color: var(--primary);">📋 جدول التمارين</h2>
+            <table id="exercises-table">
+                <thead>
+                    <tr style="background: var(--primary); color: white;">
+                        <th id="th-stage">المرحلة</th>
+                        <th id="th-resistance">المقاومة</th>
+                        <th id="th-exercise">التمرين</th>
+                        <th id="th-reps">العدد</th>
+                        <th id="th-rest">الراحة</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 8px;">
+            <h2 style="text-align: center; color: var(--primary);" id="control-title">لوحة التحكم</h2>
+
+            <div id="stage-info-box" style="text-align: center; margin: 10px 0 18px; padding: 12px 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+                <div id="stage-name" style="font-size: 1rem; color: #64748b; margin-bottom: 4px;"></div>
+                <div id="set-progress" style="font-size: 1.1rem; font-weight: bold; color: var(--primary);"></div>
+            </div>
+            
+            <div class="timer-container">
+                <div id="timer-label" class="timer-label"></div>
+                <div class="timer-display" id="timer">00:00</div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="btn-start" onclick="startWorkout()">▶️ ابدأ</button>
+                <button class="btn-danger" id="btn-stop" onclick="stopEverything()">⏹️ إيقاف</button>
+                <button class="btn-primary" id="btn-reset" onclick="resetEverything()">🔄 إعادة ضبط</button>
+            </div>
+
+            <div class="hand-counters">
+                <div class="hand-counter" id="right-hand-box">
+                    <div class="hand-label" id="right-label">اليد اليمنى</div>
+                    <div class="hand-count" id="right-count">0</div>
+                </div>
+                <div class="hand-counter" id="left-hand-box">
+                    <div class="hand-label" id="left-label">اليد اليسرى</div>
+                    <div class="hand-count" id="left-count">0</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-success" id="btn-right-complete" onclick="completeRightHand()">✅ اليد اليمنى</button>
+                <button class="btn-success" id="btn-left-complete" onclick="completeLeftHand()">✅ اليد اليسرى</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tracking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeTracking()">&times;</span>
+            <h2 id="modal-title">جدول التتبع والإنجازات</h2>
+            <table id="tracking-table">
+                <thead>
+                    <tr style="background: var(--primary); color: white;">
+                        <th id="th-stage-track">المرحلة</th>
+                        <th id="th-set-track">المجموعة</th>
+                        <th id="th-time-track">الوقت</th>
+                        <th id="th-status-track">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            ar: {
+                sets_label: 'مجموعات مكتملة',
+                time_label: 'الوقت الإجمالي',
+                control_title: 'لوحة التحكم',
+                modal_title: 'جدول التتبع والإنجازات',
+                pending: 'قيد الانتظار',
+                completed: 'مكتمل',
+                th_stage: 'المرحلة',
+                th_resistance: 'المقاومة',
+                th_exercise: 'التمرين',
+                th_reps: 'العدد',
+                th_rest: 'الراحة',
+                th_stage_track: 'المرحلة',
+                th_set_track: 'المجموعة',
+                th_time_track: 'الوقت',
+                th_status_track: 'الحالة',
+                right_label: 'اليد اليمنى',
+                left_label: 'اليد اليسرى',
+                tracking_btn: '📊 التتبع',
+                rest_mode: 'وضع الراحة',
+                workout_mode: 'وقت التمرين'
+            },
+            fr: {
+                sets_label: 'Séries complétées',
+                time_label: 'Temps total',
+                control_title: 'Panneau de contrôle',
+                modal_title: 'Suivi et réalisations',
+                pending: 'En attente',
+                completed: 'Complété',
+                th_stage: 'Étape',
+                th_resistance: 'Résistance',
+                th_exercise: 'Exercice',
+                th_reps: 'Répétitions',
+                th_rest: 'Repos',
+                th_stage_track: 'Étape',
+                th_set_track: 'Série',
+                th_time_track: 'Temps',
+                th_status_track: 'État',
+                right_label: 'Main droite',
+                left_label: 'Main gauche',
+                tracking_btn: '📊 Suivi',
+                rest_mode: 'Mode Repos',
+                workout_mode: 'Temps d\'entraînement'
+            }
+        };
+
+        const exercisesData = {
+            ar: [
+                { id: 1, stage: 'الإحماء', resistance: '10–15 كغ', exercise: 'الإحماء - ضغط ببطء', reps: 20, sets: 2, rest: 30, speed: 2000 },
+                { id: 2, stage: 'تمرين القوة', resistance: '25–35 كغ', exercise: 'تمرين القوة - ضغط متوسط', reps: 15, sets: 4, rest: 30, speed: 1000 },
+                { id: 3, stage: 'القبضة الثابتة', resistance: '35–45 كغ', exercise: 'القبضة الثابتة - اضغط وابقِ', reps: 10, sets: 6, rest: 10, speed: 1000, isStatic: true },
+                { id: 4, stage: 'تمرين السرعة', resistance: '40–50 كغ', exercise: 'تمرين السرعة - ضغط سريع', reps: 10, sets: 5, rest: 30, speed: 500 }
+            ],
+            fr: [
+                { id: 1, stage: 'Échauffement', resistance: '10–15 kg', exercise: 'Échauffement - Pression lente', reps: 20, sets: 2, rest: 30, speed: 2000 },
+                { id: 2, stage: 'Exercice de force', resistance: '25–35 kg', exercise: 'Exercice de force - Pression modérée', reps: 15, sets: 4, rest: 30, speed: 1000 },
+                { id: 3, stage: 'Prise fixe', resistance: '35–45 kg', exercise: 'Prise fixe - Appuyez et maintenez', reps: 10, sets: 6, rest: 10, speed: 1000, isStatic: true },
+                { id: 4, stage: 'Exercice de vitesse', resistance: '40–50 kg', exercise: 'Exercice de vitesse - Pression rapide', reps: 10, sets: 5, rest: 30, speed: 500 }
+            ]
+        };
+
+        let currentLanguage = 'ar';
+        let currentExerciseId = 1;
+        let currentSet = 1;
+        let seconds = 0;
+        let isRunning = false;
+        let restMode = false;
+        let timerInterval = null;
+        let rightHandCount = 0;
+        let leftHandCount = 0;
+        let rightHandCompleted = false;
+        let leftHandCompleted = false;
+        let workoutStartTime = 0;
+        let completedSets = 0;
+        let lastTickTime = 0;
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('lang-ar').classList.toggle('active', lang === 'ar');
+            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+            updateLabels();
+            populateExercisesTable();
+            initializeTracking();
+            updateTimerLabel();
+            updateStageInfo();
+        }
+
+        function updateLabels() {
+            const t = translations[currentLanguage];
+            document.getElementById('sets-label').innerText = t.sets_label;
+            document.getElementById('time-label').innerText = t.time_label;
+            document.getElementById('control-title').innerText = t.control_title;
+            document.getElementById('modal-title').innerText = t.modal_title;
+            document.getElementById('right-label').innerText = t.right_label;
+            document.getElementById('left-label').innerText = t.left_label;
+            document.getElementById('tracking-btn').innerText = t.tracking_btn;
+            document.getElementById('th-stage').innerText = t.th_stage;
+            document.getElementById('th-resistance').innerText = t.th_resistance;
+            document.getElementById('th-exercise').innerText = t.th_exercise;
+            document.getElementById('th-reps').innerText = t.th_reps;
+            document.getElementById('th-rest').innerText = t.th_rest;
+            document.getElementById('th-stage-track').innerText = t.th_stage_track;
+            document.getElementById('th-set-track').innerText = t.th_set_track;
+            document.getElementById('th-time-track').innerText = t.th_time_track;
+            document.getElementById('th-status-track').innerText = t.th_status_track;
+        }
+
+        function populateExercisesTable() {
+            const tbody = document.querySelector('#exercises-table tbody');
+            tbody.innerHTML = '';
+            exercisesData[currentLanguage].forEach(ex => {
+                const row = document.createElement('tr');
+                if (ex.id === currentExerciseId) row.style.backgroundColor = '#eff6ff';
+                const repsText = ex.isStatic ? `${ex.reps} ${currentLanguage === 'ar' ? 'ثانية' : 's'} × ${ex.sets}` : `${ex.reps} × ${ex.sets}`;
+                row.innerHTML = `<td>${ex.stage}</td><td>${ex.resistance}</td><td>${ex.exercise}</td><td>${repsText}</td><td>${ex.rest} ${currentLanguage === 'ar' ? 'ثانية' : 's'}</td>`;
+                tbody.appendChild(row);
+            });
+        }
+
+        function initializeTracking() {
+            const tbody = document.querySelector('#tracking-table tbody');
+            tbody.innerHTML = '';
+            const t = translations[currentLanguage];
+            exercisesData[currentLanguage].forEach(exercise => {
+                for (let set = 1; set <= exercise.sets; set++) {
+                    const row = document.createElement('tr');
+                    row.id = `tracking-${exercise.id}-${set}`;
+                    row.innerHTML = `<td>${exercise.stage}</td><td>${set}/${exercise.sets}</td><td id="time-${exercise.id}-${set}">--:--</td><td><span class="status-badge status-pending">${t.pending}</span></td>`;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function updateTimerLabel() {
+            const label = document.getElementById('timer-label');
+            label.innerText = restMode ? translations[currentLanguage].rest_mode : translations[currentLanguage].workout_mode;
+            if (restMode) label.style.color = 'var(--warning)';
+            else label.style.color = 'var(--primary)';
+        }
+
+        function updateStageInfo() {
+            const exercise = exercisesData[currentLanguage].find(e => e.id === currentExerciseId);
+            if (!exercise) return;
+            const stageLabel = currentLanguage === 'ar' ? 'المرحلة' : 'Étape';
+            document.getElementById('stage-name').innerText = `🏋️ ${stageLabel}: ${exercise.stage} — ${exercise.exercise}`;
+            const setLabel = currentLanguage === 'ar' ? `المجموعة ${currentSet} من ${exercise.sets}` : `Série ${currentSet} sur ${exercise.sets}`;
+            document.getElementById('set-progress').innerText = setLabel;
+        }
+
+        function startWorkout() {
+            if (isRunning) return;
+            if (workoutStartTime === 0) workoutStartTime = Date.now();
+            isRunning = true;
+            restMode = false;
+            updateTimerLabel();
+            updateStageInfo();
+            lastTickTime = Date.now();
+            runTimerEngine();
+        }
+
+        function runTimerEngine() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isRunning) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                seconds++;
+                updateTimer();
+                updateStats();
+
+                if (restMode) {
+                    handleRestLogic();
+                } else {
+                    handleWorkoutLogic();
+                }
+            }, 1000);
+        }
+
+        function handleWorkoutLogic() {
+            const exercise = exercisesData[currentLanguage].find(e => e.id === currentExerciseId);
+            if (!exercise) return;
+
+            // تحديث العدادات بناءً على سرعة التمرين
+            // اليد اليمنى أولاً
+            if (!rightHandCompleted) {
+                document.getElementById('right-hand-box').classList.add('active');
+                document.getElementById('left-hand-box').classList.remove('active');
+                
+                // حساب العدات بناءً على الثواني وسرعة التمرين
+                // للتبسيط، نستخدم الثواني مباشرة ونقسمها على سرعة التمرين
+                const repsPerSecond = 1000 / exercise.speed;
+                rightHandCount = Math.min(exercise.reps, Math.floor(seconds * repsPerSecond));
+                document.getElementById('right-count').innerText = rightHandCount;
+
+                if (rightHandCount >= exercise.reps) {
+                    rightHandCompleted = true;
+                    playAlarm();
+                    document.getElementById('btn-right-complete').classList.add('completed');
+                    // إعادة تعيين الثواني لليد اليسرى (تأخير ثانيتين كما طلب المستخدم)
+                    setTimeout(() => {
+                        seconds = 0; 
+                        updateTimer();
+                    }, 500);
+                }
+            } 
+            // ثم اليد اليسرى بعد انتهاء اليمنى
+            else if (!leftHandCompleted) {
+                document.getElementById('right-hand-box').classList.remove('active');
+                document.getElementById('left-hand-box').classList.add('active');
+                
+                const repsPerSecond = 1000 / exercise.speed;
+                // تأخير ثانيتين: نبدأ العد فقط بعد أن تتجاوز الثواني 2
+                if (seconds > 2) {
+                    leftHandCount = Math.min(exercise.reps, Math.floor((seconds - 2) * repsPerSecond));
+                    document.getElementById('left-count').innerText = leftHandCount;
+                }
+
+                if (leftHandCount >= exercise.reps) {
+                    leftHandCompleted = true;
+                    playAlarm();
+                    document.getElementById('btn-left-complete').classList.add('completed');
+                    // الانتقال للراحة
+                    setTimeout(startRestMode, 1000);
+                }
+            }
+        }
+
+        function startRestMode() {
+            restMode = true;
+            seconds = 0;
+            updateTimer();
+            updateTimerLabel();
+            document.getElementById('timer').classList.add('rest-mode');
+            document.getElementById('right-hand-box').classList.remove('active');
+            document.getElementById('left-hand-box').classList.remove('active');
+            playAlarm(); // تنبيه بدء الراحة
+        }
+
+        function handleRestLogic() {
+            const exercise = exercisesData[currentLanguage].find(e => e.id === currentExerciseId);
+            const restTime = exercise.rest;
+
+            // تنبيه مسبق قبل 3 ثوانٍ
+            if (seconds === restTime - 3) {
+                playWarningAlarm();
+            }
+
+            if (seconds >= restTime) {
+                stopEverything();
+                playAlarm(); // تنبيه نهاية الراحة
+                completeSet();
+            }
+        }
+
+        function completeSet() {
+            const exercise = exercisesData[currentLanguage].find(e => e.id === currentExerciseId);
+            const rowId = `tracking-${currentExerciseId}-${currentSet}`;
+            const row = document.getElementById(rowId);
+            
+            if (row) {
+                row.classList.add('completed');
+                const statusCell = row.querySelector('.status-badge');
+                statusCell.innerText = translations[currentLanguage].completed;
+                statusCell.classList.remove('status-pending');
+                statusCell.classList.add('status-completed');
+                const timeCell = document.getElementById(`time-${currentExerciseId}-${currentSet}`);
+                timeCell.innerText = formatTime(Math.floor((Date.now() - workoutStartTime) / 1000));
+            }
+            
+            completedSets++;
+            if (currentSet < exercise.sets) {
+                currentSet++;
+            } else {
+                if (currentExerciseId < exercisesData[currentLanguage].length) {
+                    currentExerciseId++;
+                    currentSet = 1;
+                } else {
+                    alert(currentLanguage === 'ar' ? 'تهانينا! لقد أتممت التمرين بالكامل.' : 'Félicitations ! Vous avez terminé tout l\'entraînement.');
+                    resetEverything();
+                    return;
+                }
+            }
+            resetForNextSet();
+        }
+
+        function resetForNextSet() {
+            isRunning = false;
+            restMode = false;
+            seconds = 0;
+            rightHandCount = 0;
+            leftHandCount = 0;
+            rightHandCompleted = false;
+            leftHandCompleted = false;
+            updateTimer();
+            updateTimerLabel();
+            updateStageInfo();
+            document.getElementById('right-count').innerText = '0';
+            document.getElementById('left-count').innerText = '0';
+            document.getElementById('btn-right-complete').classList.remove('completed');
+            document.getElementById('btn-left-complete').classList.remove('completed');
+            document.getElementById('timer').classList.remove('rest-mode');
+            populateExercisesTable();
+        }
+
+        function stopEverything() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        function resetEverything() {
+            stopEverything();
+            currentExerciseId = 1;
+            currentSet = 1;
+            seconds = 0;
+            workoutStartTime = 0;
+            completedSets = 0;
+            resetForNextSet();
+            initializeTracking();
+            updateStats();
+        }
+
+        function updateTimer() {
+            document.getElementById('timer').innerText = formatTime(seconds);
+        }
+
+        function formatTime(s) {
+            const mins = Math.floor(s / 60).toString().padStart(2, '0');
+            const secs = (s % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function updateStats() {
+            if (workoutStartTime === 0) return;
+            const total = Math.floor((Date.now() - workoutStartTime) / 1000);
+            document.getElementById('total-time').innerText = formatTime(total);
+            document.getElementById('completed-sets').innerText = completedSets;
+        }
+
+        function completeRightHand() {
+            if (restMode || rightHandCompleted) return;
+            rightHandCompleted = true;
+            playAlarm();
+            document.getElementById('btn-right-complete').classList.add('completed');
+            seconds = 0; // البدء لليد اليسرى
+        }
+
+        function completeLeftHand() {
+            if (restMode || leftHandCompleted) return;
+            leftHandCompleted = true;
+            playAlarm();
+            document.getElementById('btn-left-complete').classList.add('completed');
+            if (rightHandCompleted) setTimeout(startRestMode, 500);
+        }
+
+        function playAlarm() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 800;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+        function playWarningAlarm() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 1200;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {}
+        }
+
+        function openTracking() { document.getElementById('tracking-modal').classList.add('show'); }
+        function closeTracking() { document.getElementById('tracking-modal').classList.remove('show'); }
+        window.onclick = function(event) { if (event.target === document.getElementById('tracking-modal')) closeTracking(); };
+
+        changeLanguage('ar');
+    </script>
+</body>
+</html>
